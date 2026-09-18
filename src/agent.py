@@ -1,4 +1,5 @@
 import logging
+import os
 import textwrap
 
 from dotenv import load_dotenv
@@ -7,12 +8,15 @@ from livekit.agents import (
     AgentServer,
     AgentSession,
     JobContext,
+    RunContext,
     TurnHandlingOptions,
     cli,
+    function_tool,
     inference,
     room_io,
 )
 from livekit.plugins import ai_coustics
+from moss import MossClient, QueryOptions
 
 logger = logging.getLogger("agent")
 
@@ -25,17 +29,28 @@ class Assistant(Agent):
             # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
             # See all available models at https://docs.livekit.io/agents/models/llm/
             llm=inference.LLM(model="google/gemma-4-31b-it"),
-            # To use a realtime model instead of a voice pipeline, replace the LLM
-            # with a RealtimeModel and remove the STT/TTS from the AgentSession
-            # (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/)
-            # 1. Install livekit-agents[openai]
-            # 2. Set OPENAI_API_KEY in .env.local
-            # 3. Add `from livekit.plugins import openai` to the top of this file
-            # 4. Replace the llm argument with:
-            #     llm=openai.realtime.RealtimeModel(voice="marin")
             instructions=textwrap.dedent(
                 """\
-                You are a friendly, reliable voice assistant that answers questions, explains topics, and completes tasks with available tools.
+                You are a multilingual rural health information and triage assistant.
+
+                You are NOT a doctor and must not claim to diagnose diseases.
+
+                Use the search_health_knowledge tool whenever the user asks a health question that requires information from the medical knowledge base.
+
+                Use retrieved knowledge as supporting information, not as a diagnosis.
+
+                Ask concise follow-up questions when important information is missing.
+
+                If the user describes a potentially serious emergency warning sign (such as severe difficulty breathing, loss of consciousness, severe chest pain, or seizure), prioritize urgent professional/emergency medical assistance.
+
+                Do not prescribe medication.
+                Do not provide medication dosage instructions.
+                Do not claim certainty about a diagnosis.
+                Do not tell the user to delay emergency care.
+
+                When appropriate, recommend contacting a qualified healthcare professional or local emergency service.
+
+                Speak clearly and simply because the system is intended for rural users and multilingual voice interaction.
 
                 # Output rules
 
@@ -53,39 +68,61 @@ class Assistant(Agent):
                 - Help the user accomplish their objective efficiently and correctly. Prefer the simplest safe step first. Check understanding and adapt.
                 - Provide guidance in small steps and confirm completion before continuing.
                 - Summarize key results when closing a topic.
-
-                # Tools
-
-                - Use available tools as needed, or upon user request.
-                - Collect required inputs first. Perform actions silently if the runtime expects it.
-                - Speak outcomes clearly. If an action fails, say so once, propose a fallback, or ask how to proceed.
-                - When tools return structured data, summarize it to the user in a way that is easy to understand, and don't directly recite identifiers or other technical details.
-
-                # Guardrails
-
-                - Stay within safe, lawful, and appropriate use; decline harmful or out-of-scope requests.
-                - For medical, legal, or financial topics, provide general information only and suggest consulting a qualified professional.
-                - Protect privacy and minimize sensitive data.
                 """
             ),
         )
+        self._moss_client: MossClient | None = None
+        self._moss_index_loaded: bool = False
 
-    # To add tools, use the @function_tool decorator.
-    # Here's an example that adds a simple weather tool.
-    # You also have to add `from livekit.agents import function_tool, RunContext` to the top of this file
-    # @function_tool
-    # async def lookup_weather(self, context: RunContext, location: str):
-    #     """Use this tool to look up current weather information in the given location.
-    #
-    #     If the location is not supported by the weather service, the tool will indicate this. You must tell the user the location's weather is unavailable.
-    #
-    #     Args:
-    #         location: The location to look up weather information for (e.g. city name)
-    #     """
-    #
-    #     logger.info(f"Looking up weather for {location}")
-    #
-    #     return "sunny with a temperature of 70 degrees."
+    async def _get_moss_client(self) -> MossClient:
+        if self._moss_client is None:
+            project_id = os.environ.get("MOSS_PROJECT_ID")
+            project_key = os.environ.get("MOSS_PROJECT_KEY")
+            if not project_id or not project_key:
+                raise RuntimeError(
+                    "MOSS_PROJECT_ID or MOSS_PROJECT_KEY missing from environment."
+                )
+            self._moss_client = MossClient(project_id, project_key)
+
+        if not self._moss_index_loaded:
+            await self._moss_client.load_index("rural-health")
+            self._moss_index_loaded = True
+
+        return self._moss_client
+
+    @function_tool
+    async def search_health_knowledge(
+        self,
+        context: RunContext,
+        query: str,
+    ) -> str:
+        """Search the medical knowledge base for information on symptoms, general guidance, and emergency warning signs.
+
+        Args:
+            query: The health or symptom search query.
+        """
+        logger.info(f"[MOSS] Searching knowledge base: {query}")
+        try:
+            client = await self._get_moss_client()
+            results = await client.query(
+                "rural-health", query, options=QueryOptions(top_k=4)
+            )
+
+            if not results.docs:
+                logger.info("[MOSS] No relevant knowledge documents found.")
+                return "No relevant medical knowledge documents found."
+
+            response_parts = []
+            for doc in results.docs:
+                logger.info(f"[MOSS] Retrieved: {doc.id}")
+                response_parts.append(
+                    f"--- Document ID: {doc.id} (Score: {doc.score:.3f}) ---\n{doc.text}"
+                )
+
+            return "\n\n".join(response_parts)
+        except Exception as e:
+            logger.error(f"[MOSS] Error searching knowledge base: {e}")
+            return f"Unable to retrieve medical knowledge at this time: {e}"
 
 
 server = AgentServer()
@@ -142,17 +179,6 @@ async def my_agent(ctx: JobContext):
             ),
         ),
     )
-
-    # # Add a virtual avatar to the session, if desired
-    # # For other providers, see https://docs.livekit.io/agents/models/avatar/
-    # avatar = anam.AvatarSession(
-    #     persona_config=anam.PersonaConfig(
-    #         name="...",
-    #         avatarId="...",  # See https://docs.livekit.io/agents/models/avatar/plugins/anam
-    #     ),
-    # )
-    # # Start the avatar and wait for it to join
-    # await avatar.start(session, room=ctx.room)
 
     # Join the room and connect to the user
     await ctx.connect()
