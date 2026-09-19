@@ -1,4 +1,5 @@
 services:
+  # 1. Python LiveKit Agent Worker Service
   - type: worker
     name: rural-health-ai-agent
     env: python
@@ -19,4 +20,23 @@ services:
       - key: MOSS_PROJECT_ID
         sync: false
       - key: MOSS_PROJECT_KEY
+        sync: false
+
+  # 2. Medico Next.js Frontend Web Service
+  - type: web
+    name: medico-web
+    runtime: node
+    rootDir: rural-health-livekit-tester
+    region: oregon
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm start"
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
         sync: false
