@@ -1,6 +1,7 @@
 import asyncio
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 from moss import MossClient, QueryOptions
 
@@ -11,12 +12,15 @@ if env_path.exists():
 else:
     load_dotenv()
 
+
 async def main():
     project_id = os.environ.get("MOSS_PROJECT_ID")
     project_key = os.environ.get("MOSS_PROJECT_KEY")
 
     if not project_id or not project_key:
-        raise ValueError("MOSS_PROJECT_ID or MOSS_PROJECT_KEY environment variables are missing.")
+        raise ValueError(
+            "MOSS_PROJECT_ID or MOSS_PROJECT_KEY environment variables are missing."
+        )
 
     client = MossClient(project_id, project_key)
 
@@ -37,6 +41,7 @@ async def main():
 
     if hasattr(results, "time_taken_ms") and results.time_taken_ms is not None:
         print(f"Retrieval Time: {results.time_taken_ms} ms")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

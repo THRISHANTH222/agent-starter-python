@@ -19,6 +19,7 @@ source = { editable = "." }
 dependencies = [
     { name = "livekit-agents" },
     { name = "livekit-plugins-ai-coustics" },
+    { name = "livekit-plugins-gladia" },
     { name = "moss" },
     { name = "python-dotenv" },
 ]
@@ -34,6 +35,7 @@ dev = [
 requires-dist = [
     { name = "livekit-agents", specifier = ">=1.6.9" },
     { name = "livekit-plugins-ai-coustics", specifier = "~=0.2" },
+    { name = "livekit-plugins-gladia", specifier = ">=1.8.2" },
     { name = "moss", specifier = ">=1.12.0" },
     { name = "python-dotenv" },
 ]
@@ -1061,6 +1063,13 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ff/8c/4a3c72a5bd935d5f5a72bedddee500eebb95455044a3e5f50afa35914f1a/livekit_agents-1.8.2-py3-none-any.whl", hash = "sha256:314683e470a1b31d7d8862a8e1162e7f42e3959193daac41eaf707674f413b06", size = 2854670, upload-time = "2026-09-15T18:13:57.512Z" },
 ]
 
+[package.optional-dependencies]
+codecs = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+
 [[package]]
 name = "livekit-api"
 version = "1.2.1"
@@ -1161,6 +1170,22 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/86/f1/0260a8f7669a43254f57dca04ebd67be0141f904b0aadee66f1461e8b37e/livekit_plugins_ai_coustics-0.3.2-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:3d01daa5afa9d7ef16a1641f2066238674fa3fe9b9e513981a33e1d60c0b0b8b", size = 70256234, upload-time = "2026-09-02T19:08:46.699Z" },
     { url = "https://files.pythonhosted.org/packages/45/7b/de3d1100dc1692e2436746111a283bbc0b75e8668a71db02a776714108b9/livekit_plugins_ai_coustics-0.3.2-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:c71880c0a6fab84be1718959991734f676bc5ad6a815beae1dd1f727006238c9", size = 70596542, upload-time = "2026-09-02T19:08:52.565Z" },
     { url = "https://files.pythonhosted.org/packages/27/dd/e2adc5b48412b1ed5b090eb3dfc3f4d1e6f8be3e7354961ee6e65d5872ba/livekit_plugins_ai_coustics-0.3.2-cp310-abi3-win_amd64.whl", hash = "sha256:c489a22fbd18dd7d8d807c16859c6354ad44928e8a2f1fdca8a2faffde6feb36", size = 70178766, upload-time = "2026-09-02T19:08:58.436Z" },
+]
+
+[[package]]
+name = "livekit-plugins-gladia"
+version = "1.8.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "livekit-agents", extra = ["codecs"] },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/35/ca3af44b13ca8b3c967fdb98145f3234db5e2848e5c85110142db0baa850/livekit_plugins_gladia-1.8.2.tar.gz", hash = "sha256:2d00ad397dabecfd08c0c2f7e914f510bdfd7adc385af5438986fbc9b19c2c78", size = 14846, upload-time = "2026-09-15T18:29:10.854Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/37/64/185cbe3e4364fdfd04c7d0e331b28b2fd77e03c44364387ca3bda18c3b7c/livekit_plugins_gladia-1.8.2-py3-none-any.whl", hash = "sha256:5e504eea681c8d5151fa2700bf507e12329c207d9987ddb05fd922e7b5cc5e3c", size = 15497, upload-time = "2026-09-15T18:29:09.394Z" },
 ]
 
 [[package]]

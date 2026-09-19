@@ -1,163 +1,87 @@
-<a href="https://livekit.io/">
-  <img src="./.github/assets/livekit-mark.png" alt="LiveKit logo" width="100" height="100">
-</a>
+# Rural Health AI
 
-# LiveKit Agents Starter - Python
+Rural Health AI is a multilingual voice AI assistant and triage prototype built with LiveKit Agents, Gladia STT, OpenAI, MOSS RAG, and Fish Audio TTS. It is designed to provide accessible health information and triage guidance for rural populations in English, Telugu, and Hindi, with automatic language detection and code-switching.
 
-A complete starter project for building voice AI apps with [LiveKit Agents for Python](https://github.com/livekit/agents) and [LiveKit Cloud](https://cloud.livekit.io/).
+## Architecture
 
-The starter project includes:
-
-- A simple voice AI assistant, ready for extension and customization
-- A voice AI pipeline built on [LiveKit Inference](https://docs.livekit.io/agents/models/inference), providing zero-configuration access to [models](https://docs.livekit.io/agents/models) from top labs
-  - Uses the fast, open-weight Gemma 4 31B model, [hosted by LiveKit](https://docs.livekit.io/agents/models/llm/livekit/) and tuned for optimal performance in voice AI, as the default LLM
-  - Uses Fish Audio S2.1 Pro for TTS, which renders the inline delivery markup that expressive mode relies on
-  - Supports more than 50 models from OpenAI, Cartesia, Deepgram, and other providers
-  - Access to a wide range of other models, including [Realtime models](https://docs.livekit.io/agents/models/realtime), through extensive plugin ecosystem
-- Expressive mode, enabled by default: the framework injects the TTS provider's markup guide into the LLM prompt, so the model emits inline delivery tags (emotion, pacing, non-verbal sounds) that the TTS renders and the transcript never shows
-- Eval suite based on the LiveKit Agents [testing & evaluation framework](https://docs.livekit.io/agents/start/testing/)
-- [LiveKit Turn Detector](https://docs.livekit.io/agents/logic/turns/turn-detector/), an end-of-turn model that listens to the user's audio directly, combining semantic understanding with acoustic cues for state-of-the-art accuracy across 14 languages
-- [Background voice cancellation](https://docs.livekit.io/transport/media/noise-cancellation/)
-- Deep session insights from LiveKit [Agent Observability](https://docs.livekit.io/deploy/observability/)
-- A Dockerfile ready for [production deployment to LiveKit Cloud](https://docs.livekit.io/deploy/agents/)
-
-This starter app is compatible with any [custom web/mobile frontend](https://docs.livekit.io/frontends/) or [telephony](https://docs.livekit.io/telephony/).
-
-## Using coding agents
-
-This project is designed to work with coding agents like [Claude Code](https://claude.com/product/claude-code), [Cursor](https://www.cursor.com/), and [Codex](https://openai.com/codex/).
-
-For your convenience, LiveKit offers both a CLI and an [MCP server](https://docs.livekit.io/reference/developer-tools/docs-mcp/) that can be used to browse and search its documentation. The [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/) (`lk docs`) works with any coding agent that can run shell commands. Install it for your platform:
-
-**macOS:**
-
-```console
-brew install livekit-cli
+```
+User Voice 
+  → LiveKit RTC 
+  → Gladia Multilingual STT (en, te, hi + code-switching) 
+  → OpenAI LLM 
+  → MOSS RAG (rural-health English knowledge retrieval) 
+  → Multilingual TTS (Fish Audio s2.1-pro via LiveKit Inference) 
+  → User Voice Response
 ```
 
-**Linux:**
+## Environment Variables
 
-```console
-curl -sSL https://get.livekit.io/cli | bash
-```
+The following environment variables are required to run the agent:
 
-**Windows:**
+- `LIVEKIT_URL`: LiveKit Cloud WebSocket URL (e.g. `wss://your-project.livekit.cloud`)
+- `LIVEKIT_API_KEY`: LiveKit Cloud API Key
+- `LIVEKIT_API_SECRET`: LiveKit Cloud API Secret
+- `OPENAI_API_KEY`: OpenAI API Key for LLM inference
+- `GLADIA_API_KEY`: Gladia API Key for multilingual STT
+- `MOSS_PROJECT_ID`: MOSS Project ID for RAG index
+- `MOSS_PROJECT_KEY`: MOSS Project Key for RAG index
 
-```console
-winget install LiveKit.LiveKitCLI
-```
+See `.env.example` for a template.
 
-The `lk docs` subcommand requires version 2.15.0 or higher. Check your version with `lk --version` and update if needed. Once installed, your coding agent can search and browse LiveKit documentation directly from the terminal:
+## Local Development
 
-```console
-lk docs search "voice agents"
-lk docs get-page /agents/start/voice-ai-quickstart
-```
-
-See the [Using coding agents](https://docs.livekit.io/intro/coding-agents/) guide for more details, including MCP server setup.
-
-The project includes a complete [AGENTS.md](AGENTS.md) file for these assistants. You can modify this file to suit your needs. To learn more about this file, see [https://agents.md](https://agents.md).
-
-## Dev Setup
-
-Create a project from this template with the LiveKit CLI (recommended):
-
+### 1. Install Dependencies
 ```bash
-lk cloud auth
-lk agent init my-agent --template agent-starter-python
-```
-
-The CLI clones the template and configures your environment. Then follow the rest of this guide from [Run the agent](#run-the-agent).
-
-<details>
-<summary>Alternative: Manual setup without the CLI</summary>
-
-Clone the repository and install dependencies to a virtual environment:
-
-```console
-cd agent-starter-python
 uv sync
 ```
 
-Sign up for [LiveKit Cloud](https://cloud.livekit.io/) then set up the environment by copying `.env.example` to `.env.local` and filling in the required keys:
-
-- `LIVEKIT_URL`
-- `LIVEKIT_API_KEY`
-- `LIVEKIT_API_SECRET`
-
-You can load the LiveKit environment automatically using the [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/):
-
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env.local` and fill in your credentials:
 ```bash
-lk cloud auth
-lk app env --write --destination .env.local
+cp .env.example .env.local
 ```
 
-</details>
-
-## Run the agent
-
-Run this command to speak to your agent directly in your terminal:
-
-```console
-uv run python src/agent.py console
-```
-
-To run the agent for use with a frontend or telephony, use the `dev` command:
-
-```console
+### 3. Run the Agent Locally
+To run the agent in local development mode:
+```bash
 uv run python src/agent.py dev
 ```
 
-In production, use the `start` command:
-
-```console
-uv run python src/agent.py start
+To run in terminal console mode:
+```bash
+uv run python src/agent.py console
 ```
 
-## Frontend & Telephony
-
-Get started quickly with our pre-built frontend starter apps, or add telephony support:
-
-| Platform | Link | Description |
-|----------|----------|-------------|
-| **Web** | [`livekit-examples/agent-starter-react`](https://github.com/livekit-examples/agent-starter-react) | Web voice AI assistant with React & Next.js |
-| **iOS/macOS** | [`livekit-examples/agent-starter-swift`](https://github.com/livekit-examples/agent-starter-swift) | Native iOS, macOS, and visionOS voice AI assistant |
-| **Flutter** | [`livekit-examples/agent-starter-flutter`](https://github.com/livekit-examples/agent-starter-flutter) | Cross-platform voice AI assistant app |
-| **React Native** | [`livekit-examples/voice-assistant-react-native`](https://github.com/livekit-examples/voice-assistant-react-native) | Native mobile app with React Native & Expo |
-| **Android** | [`livekit-examples/agent-starter-android`](https://github.com/livekit-examples/agent-starter-android) | Native Android app with Kotlin & Jetpack Compose |
-| **Web Embed** | [`livekit-examples/agent-starter-embed`](https://github.com/livekit-examples/agent-starter-embed) | Voice AI widget for any website |
-| **Telephony** | [Documentation](https://docs.livekit.io/telephony/) | Add inbound or outbound calling to your agent |
-
-For advanced customization, see the [complete frontend guide](https://docs.livekit.io/frontends/).
-
-## Tests and evals
-
-Simulations run full multi-turn conversations between a simulated user and your agent on LiveKit Cloud, then judge each transcript. The scenarios live in [`scenarios.yaml`](scenarios.yaml). Run them locally with the [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/):
-
-```console
-lk agent simulate --scenarios scenarios.yaml
+To run unit tests:
+```bash
+$env:PYTHONPATH="src"; uv run pytest
 ```
 
-The `Simulations` workflow in `.github/workflows/simulations.yml` runs the same file on every merge to `main` and on demand from the Actions tab. It runs there rather than on every pull request push because each run spends real inference. See the [simulations guide](https://docs.livekit.io/agents/start/testing/simulations/) for how to write scenarios and read results.
+## Render Deployment
 
-For turn-level checks that don't need a live session, the LiveKit Agents [testing & evaluation framework](https://docs.livekit.io/agents/start/testing/) runs your agent in-process under `pytest`. A commented-out example lives in [`tests/test_agent.py`](tests/test_agent.py).
+Follow these steps to deploy the Python LiveKit voice agent as a service on Render:
 
-## Using this template repo for your own project
+1. **Push project to GitHub**: Ensure all code changes, `render.yaml`, `requirements.txt`, and `.env.example` are committed and pushed to your repository.
+2. **Create a Render Service**: Log into the [Render Dashboard](https://dashboard.render.com/) and click **New +** -> **Blueprint** (or **Background Worker**).
+3. **Connect GitHub Repository**: Select your `rural-health-agent` repository.
+4. **Select Service Type**: Select **Background Worker** (or **Web Service** if you prefer an HTTP health endpoint; the code supports both).
+5. **Set Build & Start Commands**:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python src/agent.py start`
+6. **Add Environment Variables**: Under the Environment section, add all 7 required environment variables (`LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `OPENAI_API_KEY`, `GLADIA_API_KEY`, `MOSS_PROJECT_ID`, `MOSS_PROJECT_KEY`).
+7. **Deploy**: Click **Deploy**.
+8. **Check Logs**: Monitor the deployment logs in Render. Look for:
+   - `Starting Rural Health AI agent...`
+   - `Connecting to LiveKit...`
+   - `Agent ready`
+9. **Verify in LiveKit Cloud**: Open the LiveKit Cloud Dashboard -> Agents tab to confirm your worker process is registered and ready to receive dispatches.
 
-Once you've started your own project based on this repo, you should:
+## Security
 
-1. **Check in your `uv.lock`**: This file is currently untracked for the template, but you should commit it to your repository for reproducible builds and proper configuration management. (The same applies to `livekit.toml`, if you run your agents in LiveKit Cloud)
+- Never commit secrets or API keys to Git.
+- Keep `.env` and `.env.local` in `.gitignore`.
+- Set all production credentials securely in your Render dashboard environment settings.
 
-2. **Add your own repository secrets**: You must [add secrets](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/using-secrets-in-github-actions) for `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` so that the simulations can run in CI.
+## Safety
 
-## Deploying to production
-
-This project is production-ready and includes a working `Dockerfile`. To deploy it to LiveKit Cloud or another environment, see the [deploying to production](https://docs.livekit.io/deploy/agents/) guide.
-
-## Self-hosted LiveKit
-
-You can also self-host LiveKit instead of using LiveKit Cloud. See the [self-hosting](https://docs.livekit.io/transport/self-hosting/local/) guide for more information. If you choose to self-host, you'll need to also use [model plugins](https://docs.livekit.io/agents/models/#plugins) instead of LiveKit Inference and will need to remove the [LiveKit Cloud noise cancellation](https://docs.livekit.io/transport/media/noise-cancellation/) plugin.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This system is an educational health information and triage prototype. It does **NOT** diagnose medical conditions, claim to be a doctor, prescribe medications, or provide dosage instructions. For serious or emergency symptoms (such as severe difficulty breathing, loss of consciousness, severe chest pain, seizure, severe confusion, severe dehydration, or sudden severe headache), users must seek urgent professional or emergency medical care immediately.

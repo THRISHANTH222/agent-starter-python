@@ -1,8 +1,9 @@
 import asyncio
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
-from moss import MossClient, DocumentInfo
+from moss import DocumentInfo, MossClient
 
 # Load environment variables from .env.local
 env_path = Path(".env.local")
@@ -11,13 +12,16 @@ if env_path.exists():
 else:
     load_dotenv()
 
+
 async def main():
     print("Loading MOSS credentials...")
     project_id = os.environ.get("MOSS_PROJECT_ID")
     project_key = os.environ.get("MOSS_PROJECT_KEY")
 
     if not project_id or not project_key:
-        raise ValueError("MOSS_PROJECT_ID or MOSS_PROJECT_KEY environment variables are missing.")
+        raise ValueError(
+            "MOSS_PROJECT_ID or MOSS_PROJECT_KEY environment variables are missing."
+        )
 
     client = MossClient(project_id, project_key)
 
@@ -25,7 +29,7 @@ async def main():
     if not knowledge_dir.exists():
         raise FileNotFoundError(f"Knowledge directory not found: {knowledge_dir}")
 
-    md_files = sorted(list(knowledge_dir.glob("*.md")))
+    md_files = sorted(knowledge_dir.glob("*.md"))
     print(f"Found {len(md_files)} knowledge documents.")
 
     docs = []
@@ -50,6 +54,7 @@ async def main():
         print(f"Indexed: {doc_id}")
 
     print("MOSS index setup completed.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
